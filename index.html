@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="initial-scale=1.0, user-scalable=0, maximum-scale=1" />
+
+<title>Modality</title>
+
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Pacifico">
+<link rel="stylesheet" type="text/css" href="css/demo.css" />
+
+<!--<link rel="stylesheet" type="text/css" href="css/modality/src/modality.css" />
+<link rel="stylesheet" type="text/css" href="css/modality/src/modality-popover.css" />
+<link rel="stylesheet" type="text/css" href="css/modality/src/modality-modal.css" />-->
+
+<link rel="stylesheet" type="text/css" href="css/modality/modality-min.css" />
+
+</head>
+
+<body>
+
+	<div class="demo-page">
+
+		<h1 class="demo-primaryHeading">Modality</h1>
+
+		<div class="demo-sampleLinks">
+			<a href="#modalContent" modality-modal class="demo-modalityLink">Modal</a>
+			<a href="#popoverContent" modality-popover class="demo-modalityLink">Popover</a>
+		</div>
+
+		<pre class="demo-code">
+			<code>
+ &lt;a href="#modalContent"   modality-modal&gt;Modal&lt;/a&gt;
+ &lt;a href="#popoverContent" modality-popover&gt;Popover&lt;/a&gt;
+			</code>
+		</pre>		
+
+		<p><a href="https://github.com/ianrichard/modality" class="demo-documentationLink">Docs &amp; download @ Github</a></p>				
+
+	</div>
+
+	<div style="display: none">
+		
+		<div id="modalContent" class="demo-modalContent">
+			<h1 class="demo-secondaryHeading">What's Modality?</h1>
+			<p>Modality is a front-end framework for modals and popovers. It's fully responsive, works basically the same across common devices and browsers, and is easy to customize for your own use.</p>
+			<p>The contents of your modals and popovers can be either be directly coded on the page it's called from, or brought in from an external source using AJAX.  It's even friendly with AngularJS.</p>
+		</div>
+
+		<div id="popoverContent" class="demo-popoverContent">
+			<p>I wrote this to be easy enough for my designer friends to use without having to write a line of JavaScript.</p> 
+			<p>And extensive enough for my front-end friends to give me a high-five.</p>
+		</div>
+
+	</div>
+
+	<!-- dependent libraries -->
+	<script type="text/javascript" src="js/lib/jquery.js"></script>
+		
+	<!-- modality -->
+	<!--<script type="text/javascript" src="js/modality/src/modality.js"></script>
+	<script type="text/javascript" src="js/modality/src/modality-content.js"></script>
+	<script type="text/javascript" src="js/modality/src/modality-modal.js"></script>
+	<script type="text/javascript" src="js/modality/src/modality-popover.js"></script>-->
+	<script type="text/javascript" src="js/modality/modality-min.js"></script>
+
+	<!-- optional libraries -->
+
+	<!-- prevents desktop background scrolling when modal or popover is open -->
+	<!--<script type="text/javascript" src="js/lib/mousewheelStopPropagation.js"></script>-->
+	<!-- converts click to touch events automagically for better mobile performance -->
+	<script type="text/javascript" src="js/lib/fastclick.js"></script>
+	<script type="text/javascript">new FastClick(document.body);</script>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+html {
+	font-family: sans-serif;
+	box-sizing: border-box;
+	font-size: 16px;
+	margin: 30px 60px;	
+	background-size: initial;
+	-webkit-font-smoothing: antialiased;
+	min-height: 100%;
+	margin: 0;
+    background: #5D4157;
+	background: linear-gradient(#A8CABA -50%, #5D4157 150%);
+}
+
+body {
+	margin: 60px auto;
+	max-width: 532px;
+}
+
+p, code {
+    line-height: 1.55em;
+
+}
+
+.demo-page, .demo-page a {
+    color: #FFF;
+    text-align: center;
+}
+
+.demo-primaryHeading {
+	font-family: 'Pacifico', cursive;
+	font-weight: lighter;
+}
+
+.demo-primaryHeading {
+    text-align: center;
+    font-size: 58px;
+    line-height: 1.6em;
+}
+
+.demo-secondaryHeading {	
+    
+    font-size: 24px;
+    font-weight: lighter;
+}
+
+.demo-sampleLinks {
+    text-align: center;
+
+    margin: 20px 0;
+}
+
+.demo-modalityLink {
+    display: inline-block;
+    color: #FFF;
+    text-decoration: none;
+    text-transform: uppercase;
+    padding: 16px 16px 12px 16px;
+    margin: 10px 8px;
+    border: 1px solid #FFF;
+    border-radius: 4px;
+    width: 82px;
+}
+
+.demo-code {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    text-align: left;
+}
+
+.demo-documentationLink {
+	border-bottom: 4px solid rgba(255,255,255,.5);
+	text-decoration: none;
+	text-transform: uppercase;
+	padding: 7px 0;
+}
+
+.demo-modalContent {
+	padding: 20px 30px;
+}
+
+.demo-popoverContent {
+	padding: 10px 20px;
+}
+
