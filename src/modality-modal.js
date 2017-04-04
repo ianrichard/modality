@@ -1,16 +1,6 @@
-/*  
-	http://modality.me
-	Component modality-modal.js
-	Instantiable UI modal
-	Created by ianrichard.com 2013-15
-	MIT license
-*/
 Modality.Modal = function (config) {
 
-	var _$invokingElement 	= $(config.invokingElement);
-
 	var _defaultModalAttributes = {
-		width: 			 '90%',
 		height: 		 'auto',
 		maxWidth: 		 800,
 		fadeInDuration:  300,
@@ -19,13 +9,15 @@ Modality.Modal = function (config) {
 		scaleSelector: 	 undefined
 	};
 
-	var _modalAttributes = {};
+	var _dom = {
+		scaleContainer: null,
+		invokingElement: config.invokingElement,
+		modalScopeContainer: null,
+		modal: null,
+		modalContent: null
+	}
 
-	var _$scaleContainer, 
-		_$invokingElement,
-		_$modalScopeContainer,
-		_$modal, 
-		_$modalContent;
+	var _modalAttributes = {};
 
 	var _modalIsTransitioning = false;
 
@@ -49,68 +41,41 @@ Modality.Modal = function (config) {
 	var _modalSnapshot = {};
 
 	var _loadModal = function () {
-
 		_checkAndSetTransitioningFlag();
-
 		_getModalAttributes();
-
 		_runCallback(_modalAttributes.preLoadCallback);
-
 		_getModalScopeContainer();
-
 		_injectModalTemplate();
-
 		_setScopedSelectors();
-
 		_getDocumentSize();
-
 		_getPaddedDocumentRegion();
-		
 		_loadModalContent();
-
 		_broadcastPreLoadEvent();
-
 		_setDefaultModalDisplayProperties();
-
 		_positionModalContent();
-
 		_showModal();
-
 		_setGenericEventListeners();
-
 		_setModalSnapshot();
-
 	};
 
 	var _checkAndSetTransitioningFlag = function () {
 		if (_modalIsTransitioning) {
 			return;
 		}
-
 		_modalIsTransitioning = true;
 	};	
 
 	var _getModalAttributes = function () {
-		
+
 		_modalAttributes = {};
-		
-		_modalAttributes.width 				= _$invokingElement.attr('modality-width');
-
-		_modalAttributes.height 			= _$invokingElement.attr('modality-height');
-
-		_modalAttributes.maxWidth 			= _$invokingElement.attr('modality-max-width');												
-
-		_modalAttributes.fadeInDuration 	= _$invokingElement.attr('modality-fade-in-duration');
-
-		_modalAttributes.fadeOutDuration 	= _$invokingElement.attr('modality-fade-out-duration');
-
-		_modalAttributes.closeOutside		= _$invokingElement.attr('modality-close-outside');
-
-		_modalAttributes.preLoadCallback 	= _$invokingElement.attr('modality-pre-load-callback');
-
-		_modalAttributes.postCloseCallback 	= _$invokingElement.attr('modality-post-close-callback');
-
-		_modalAttributes.scaleSelector 		= _$invokingElement.attr('modality-background-scale');
+		_modalAttributes.height 			= _dom.invokingElement.getAttribute('modality-height');
+		_modalAttributes.maxWidth 			= _dom.invokingElement.getAttribute('modality-max-width');
+		_modalAttributes.fadeInDuration 	= _dom.invokingElement.getAttribute('modality-fade-in-duration');
+		_modalAttributes.fadeOutDuration 	= _dom.invokingElement.getAttribute('modality-fade-out-duration');
+		_modalAttributes.closeOutside		= _dom.invokingElement.getAttribute('modality-close-outside');
+		_modalAttributes.preLoadCallback 	= _dom.invokingElement.getAttribute('modality-pre-load-callback');
+		_modalAttributes.postCloseCallback 	= _dom.invokingElement.getAttribute('modality-post-close-callback');
+		_modalAttributes.scaleSelector 		= _dom.invokingElement.getAttribute('modality-background-scale');
 
 		// let's scrubbadubb dubb the values
 		for (attribute in _modalAttributes) {
@@ -119,8 +84,7 @@ Modality.Modal = function (config) {
 
 			if (typeof attributeValue != 'function') {
 				// if it's empty, set it to undefined for the proper extend object merging
-
-				if (!attributeValue || $.trim(attributeValue) === '') {
+				if (!attributeValue || !attributeValue.replace(/\s/g, '').length) {
 					attributeValue = undefined;
 				}
 				
@@ -140,70 +104,71 @@ Modality.Modal = function (config) {
 			_modalAttributes.closeOutside = false;
 		}
 
-		_modalAttributes = $.extend({}, _defaultModalAttributes, _modalAttributes);
-					
+		_modalAttributes = _extend(_defaultModalAttributes, _modalAttributes);
+
 	};		
 
 	var _getModalScopeContainer = function () {
-		
+
 		// reset from previous load
-		_$modalScopeContainer = null;
-		_$modalScopeContainer = $('body > *');
+		_dom.modalScopeContainer = null;
+		_dom.modalScopeContainer = document.querySelector('body > *');
 		
 	};
 
 	var _injectModalTemplate = function () {
 
-		_$modal = $('<div class="modality-modal"><div class="modality-modal-obscure" modality-obscure onclick=""></div><div class="modality-modal-container"><div class="modality-modal-content" modality-modal-content tabindex="0"></div></div></div>');
+		_dom.modal = document.createElement('div');
+		_dom.modal.className = 'modality-modal';
+
+		_dom.modal.innerHTML = '<div class="modality-modal-obscure" modality-obscure onclick=""></div><div class="modality-modal-container"><div class="modality-modal-content" modality-modal-content tabindex="0"></div></div>';
 
 		if (_modalAttributes.closeOutside) {
-			_$modal.find('[modality-obscure]').attr('modality-close','');
+			_dom.modal.querySelector('[modality-obscure]').setAttribute('modality-close','');
 		}
 
-		_$modalScopeContainer.parent().append(_$modal);
-
+		_dom.modalScopeContainer.parentNode.appendChild(_dom.modal);
 
 	};		
 
 	var _setScopedSelectors = function () {
-
-		_$scaleContainer	= $(_modalAttributes.scaleSelector);
-
-		_$modalContent 		= _$modal.find('[modality-modal-content]');
-
-	};	
+		_dom.scaleContainer	= document.querySelector(_modalAttributes.scaleSelector);
+		_dom.modalContent = _dom.modal.querySelector('[modality-modal-content]');
+	};
 
 	var _loadModalContent = function () {
 
 		_ModalContent = new Modality.Content({
-			invokingElement: _$invokingElement[0],
-			targetContainer: _$modalContent[0]
+			invokingElement: _dom.invokingElement,
+			targetContainer: _dom.modalContent
 		});
 
 		_ModalContent.load();
 	};
 
 	var _broadcastPreLoadEvent = function () {
-		$(_getContentElement()).trigger('Modality.PreLoad');
+		var event = new CustomEvent('Modality.PreLoad', {bubbles: true, cancelable: true});
+		_getContentElement().dispatchEvent(event);
 	};
 
 	var _broadcastPostLoadEvent = function () {
-		$(_getContentElement()).trigger('Modality.PostLoad');
+		var event = new CustomEvent('Modality.PostLoad', {bubbles: true, cancelable: true});
+		_getContentElement().dispatchEvent(event);
 	};		
 
 	var _setDefaultModalDisplayProperties = function () {
-						
-		//_$modalContent.css('opacity', 0);
 
-		_$modal.show();
+		_dom.modal.style.display = '';
 
 	};
 
 	var _positionModalContent = function () {
 
-		$modalContentInner = _$modalContent.find('> *');
-		
-		var scrollTop = $modalContentInner.scrollTop();
+		_dom.modalContentInner = _dom.modalContent.firstChild;
+
+		if (!_dom.modalContentInner) { return; }
+
+		var scrollTop = _dom.modalContentInner.scrollTop;
 
 		var maxWidth = _modalAttributes.maxWidth;
 
@@ -211,17 +176,15 @@ Modality.Modal = function (config) {
 			maxWidth = _paddedDocumentRegion.width;
 		}
 
-		$modalContentInner.height('auto');
-		_$modalContent.css('width', 		_modalAttributes.width);
-		_$modalContent.css('height', 		_modalAttributes.height);
-		_$modalContent.css('max-width', 	 maxWidth);
-		_$modalContent.css('max-height', 	_paddedDocumentRegion.height);
+		_dom.modalContentInner.style.height = 'auto';
+		_dom.modalContent.style.height = _modalAttributes.height + 'px';
+		_dom.modalContent.style.width = maxWidth + 'px';
+		_dom.modalContent.style.maxWidth = maxWidth + 'px';
+		_dom.modalContent.style.maxHeight = _paddedDocumentRegion.height + 'px';
+		_dom.modalContent.style.marginLeft = -(_dom.modalContent.offsetWidth / 2) + 'px';
+		_dom.modalContent.style.marginTop = -(_dom.modalContent.offsetHeight / 2) + 'px';
 
-		_$modalContent.css('margin-left', -(_$modalContent.outerWidth()  / 2));
-		_$modalContent.css('margin-top',  -(_$modalContent.outerHeight() / 2));
-		//$modalContentInner.height(_$modalContent.height());
-
-		$modalContentInner.scrollTop(scrollTop);
+		_dom.modalContentInner.scrollTop = scrollTop;
 
 	};	
 
@@ -229,17 +192,17 @@ Modality.Modal = function (config) {
 
 		setTimeout(function() {
 			_modalIsTransitioning = false;
-			if (_rootLevelComponent) {
-				_$scaleContainer.addClass('modality-modal-background-blur');
+			if (_rootLevelComponent && _dom.scaleContainer) {
+				_dom.scaleContainer.classList.add('modality-modal-background-blur');
 			}
 			_broadcastPostLoadEvent();
 		}, _modalAttributes.fadeInDuration)
 
-		_$modal.addClass('modality-modal-active');
-		_$modalContent.focus();
+		_dom.modal.classList.add('modality-modal-active');
+		_dom.modalContent.focus();
 
 	};
-	
+
 	var _closeModal = function () {
 
 		if (_modalIsTransitioning) {
@@ -247,22 +210,19 @@ Modality.Modal = function (config) {
 		}
 
 		_modalIsTransitioning = true;
+		_dom.invokingElement.focus();
 
-		_$invokingElement.focus();		
-
-		_$modal.find('[component-close]').removeAttr('component-close');
-		
-		if (_rootLevelComponent) {
-			_$scaleContainer.removeClass('modality-modal-background-blur');
+		if (_rootLevelComponent && _dom.scaleContainer) {
+			_dom.scaleContainer.classList.remove('modality-modal-background-blur');
 		}
-		
-		_$modal.removeClass('modality-modal-active');
+
+		_dom.modal.classList.remove('modality-modal-active');
 
 		setTimeout(function () {
-			_$modal.hide();
+			_dom.modal.style.display = 'none';
 			_modalIsTransitioning = false;
 			_ModalContent.unload();
-			_$modal.remove();
+			_dom.modal.parentNode.removeChild(_dom.modal);
 			_runCallback(_modalAttributes.postCloseCallback);
 		}, _modalAttributes.fadeOutDuration);
 
@@ -270,8 +230,8 @@ Modality.Modal = function (config) {
 
 	var _getDocumentSize = function  () {
 
-		_documentWidth = $(window).width();
-		_documentHeight = $(window).height();
+		_documentWidth   = window.innerWidth;
+		_documentHeight  = window.innerHeight;
 
 	};
 
@@ -303,8 +263,8 @@ Modality.Modal = function (config) {
 	};	
 
 	var _modalIsShowing = function () {
-		if (_$modal != undefined) {
-			return _$modal.is(':visible');
+		if (_dom.modal != undefined) {
+			return _dom.modal.style.display !== 'none'
 		} else {
 			return false;
 		}
@@ -339,13 +299,13 @@ Modality.Modal = function (config) {
 	var _setModalSnapshot = function () {
 		_modalSnapshot.documentWidth 	= _documentWidth;
 		_modalSnapshot.documentHeight 	= _documentHeight;
-		_modalSnapshot.contentHeight 	= _$modalContent.height();
+		_modalSnapshot.contentHeight 	= _dom.modalContent.offsetHeight;
 	};
 
 	var _documentSizeOrModalContentHasChanged = function() {
 		if (_documentWidth 			!= _modalSnapshot.documentWidth 
 		||  _documentHeight 		!= _modalSnapshot.documentHeight
-		||  _$modalContent.height() != _modalSnapshot.contentHeight) {
+		||  _dom.modalContent.offsetHeight != _modalSnapshot.contentHeight) {
 			_setModalSnapshot();
 			return true;
 		} else {
@@ -365,39 +325,29 @@ Modality.Modal = function (config) {
 				}
 			});
 
-			observer.observe(_$modalContent.find('> *')[0], {
+			observer.observe(_dom.modalContent.firstChild, {
 				subtree: true,
 				attributes: true
-			});	
-		}
-
-		// for browsers that don't support mutation observers
-		else {
-			_$modalContent.bind('click', function (e) {
-				_resize();
-			});
-
-			_$modalContent.keyup(function(e) {
-
-				// when switching between focusable elements
-				if (_lastFocusedInnerElement !== e.target) {
-					_resize();
-				}
-
-				_lastFocusedInnerElement = e.target;
-
-				//enter
-				if (e.keyCode == 13) {
-					_resize();
-				}
 			});
 		}
 
 	};
 
 	var _getContentElement = function () {
-		return _$modal.find('[modality-modal-content] > *')[0];
-	};			
+		return _dom.modal.querySelector('[modality-modal-content] > *');
+	};
+
+	// TODO - migrate utility functions...
+
+	var _extend = function(defaultObject, customObject) {
+		var returnObject = defaultObject;
+		for (var key in customObject) {
+			if (customObject[key]) {
+				returnObject[key] = customObject[key];
+			}
+		}
+		return returnObject;
+	};
 		
 	return {
 		componentName: 		'Modal',

@@ -6,34 +6,33 @@ module.exports = function(grunt) {
 		copy: {
 			main: {
 				files: [
-					{ src: ['node_modules/jquery/dist/jquery.js'], dest: 'js/lib/jquery.js' },
-					{ src: ['css/modality/src/modality-interstitial.gif'], dest: 'css/modality/modality-interstitial.gif' }
+					{ src: ['src/modality-interstitial.gif'], dest: 'lib/modality-interstitial.gif' }
 				]
 			}
 		},
 
 		concat: {
 			js: {
-				src:  ['js/modality/src/modality.js', 'js/modality/src/modality-content.js', 'js/modality/src/modality-modal.js', 'js/modality/src/modality-popover.js'],
-				dest: 'js/modality/modality-min.js'
+				src:  ['src/modality.js', 'src/modality-content.js', 'src/modality-modal.js', 'src/modality-popover.js'],
+				dest: 'lib/modality-min.js'
 			},
 			css: {
-				src:  'css/modality/src/*.css',
-				dest: 'css/modality/modality-min.css'
+				src:  'src/*.css',
+				dest: 'lib/modality-min.css'
 			}
 		},
 
 		uglify: {
 			js: {
-				src:  'js/modality/modality-min.js',
-				dest: 'js/modality/modality-min.js'
+				src:  'lib/modality-min.js',
+				dest: 'lib/modality-min.js'
 			}
 		},
 
 	    cssmin: {
 	        css: {
-	            src:  'css/modality/modality-min.css',
-	            dest: 'css/modality/modality-min.css'
+	            src:  'lib/modality-min.css',
+	            dest: 'lib/modality-min.css'
 	        }
 	    }		
 

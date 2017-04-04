@@ -1,19 +1,17 @@
 {
-	"name": "Modality",
-	"description": "Responsive popover and modal",
-	"repository" :
-	{ 
-		"type" : "git",
-		"url"  : "https://github.com/ianrichard/modality"
-	},
-	"version": "0.1.0",
-	"devDependencies": {
-		"grunt": "~0.4.x",
-		"grunt-contrib-concat": "^0.5.0",
-		"grunt-contrib-copy":   "^0.6.0",
-		"grunt-contrib-uglify": "^0.5.1",
-		"grunt-contrib-cssmin": "0.11.x",
-		"load-grunt-tasks": "^0.6.0",
-		"jquery": "x"
-	}
+  "name": "Modality",
+  "description": "Responsive modal and popover",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ianrichard/modality"
+  },
+  "version": "2.0.0",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-cssmin": "^2.0.0",
+    "grunt-contrib-uglify": "^2.2.1",
+    "load-grunt-tasks": "^3.5.2"
+  }
 }

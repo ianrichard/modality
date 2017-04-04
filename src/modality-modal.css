@@ -5,7 +5,7 @@
 	bottom: 0;
 	position: fixed;
 	z-index: 1000;
-	-webkit-backface-visibility: hidden;	
+	-webkit-backface-visibility: hidden;
 }
 
 .modality-modal-content:focus {
@@ -13,7 +13,7 @@
 }
 
 .modality-modal-obscure {
-	-webkit-transition: opacity .5s ease-out;
+	transition: opacity .5s ease-out;
 	opacity: 0;
 	background: #000;
 	position: fixed;
@@ -21,15 +21,10 @@
 	top: 0px;
 	right: 0px;
 	bottom: 0px;
-	/*z-index: -1;*/
 }
 
 .modality-modal-active .modality-modal-obscure {
 	opacity: .15;
-	filter: alpha(opacity = 15);
-}
-
-.modality-modal-container {
 }
 
 .modality-modal-content {
@@ -42,20 +37,28 @@
 	overflow: auto;
 	-webkit-overflow-scrolling: touch;
 	opacity: 0;
-	transform: scale(.9,.9);
 	-webkit-transform: scale(.9,.9);
-	transition: transform .3s, opacity .3s;	
 	-webkit-transition: -webkit-transform .3s, opacity .3s;
+	transform: scale(.9,.9);
+	transition: transform .3s, opacity .3s;
+}
+
+/* high contrast mode for accessibility */
+.modality-modal-content:before {
+	border-radius: 5px;
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	border: 1px solid transparent;
 }
 
 .modality-modal-active .modality-modal-content {
 	opacity: 1;
 	-webkit-transform: scale(1,1);
 	transform: scale(1,1);
-}
-
-.modality-modal-content > * {
-
 }
 
 .modality-modal .modality-interstitial {
@@ -69,6 +72,8 @@
 .modality-modal-background-blur {
 	-webkit-filter: blur(1px);
 	-webkit-transition: -webkit-filter .5s;
+	filter: blur(1px);
+	transition: filter .5s;
 }
 
 @media only screen and (max-width: 500px) {
@@ -76,7 +81,6 @@
 		margin: 4%;
 		max-width: 92%;
 		max-height: 92%;
-
 	}
 }
 

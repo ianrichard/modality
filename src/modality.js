@@ -1,37 +1,52 @@
-/*  
-	http://modality.me
-	Manager modality.js
-	Manages popover and modal components
-	Created by ianrichard.com 2013-15
-	MIT license
-*/
 var Modality = (function () {
 
 	var _isTouch 					= 'ontouchstart' in document.documentElement;
 	var _Components 				= new Array();
-	var _$modalityScopeContainer 	= $('body');
+
+	var _dom = {
+		html: 					document.querySelector('html'),
+		modalityScopeContainer: document.querySelector('body')
+	}
 
 	var _addEventListeners = function () {
 
-		$(document).delegate('[modality-modal], [modality-popover]', 'click', function (e) {
-			e.preventDefault();
-			_createModalityInstance($(this));
-		});
-				
-		$(document).delegate('[modality-close]', 'click', function () {
-			_closeHighestComponent();
-		});
+		// modality link or button delegate
+		document.addEventListener('click', function(event) {
+			_clickHandler(event, ['modality-modal', 'modality-popover'], function(target) {
+				_createModalityInstance(target);
+			});
 
-		$(document).delegate('[modality-submit]', 'click', function () {
-			_broadcastSubmitFromHighestComponent();
+			_clickHandler(event, ['modality-close'], function (target) {
+				_closeHighestComponent();
+			});
+
+			_clickHandler(event, ['modality-submit'], function (target) {
+				_broadcastSubmitFromHighestComponent();
+			});
 		});
 
 		// prevent background scrolling on mobile
-		$(document).delegate('[modality-obscure], [modality-popover-caret], [modality-no-scroll]', 'touchmove', function (e) {
-			e.preventDefault();
+		document.addEventListener('touchmove', function(event) {
+			_clickHandler(event, ['modality-obscure', 'modality-popover-caret', 'modality-no-scroll']);
 		});
 
-		$(document).keydown(function(e) {
+		var _clickHandler = function(event, attributeSelector, callback) {
+			var target = event.target;
+			while (target.parentNode) {
+				for (var i = 0; i < attributeSelector.length; i++) {
+					if (target.hasAttribute(attributeSelector[i])) {
+						event.preventDefault();
+						if (callback) {
+							callback(target);
+						}
+						return;
+					}
+				}
+				target = target.parentNode;
+			}
+		};
+
+		document.addEventListener('keydown', function(e) {
 
 			var numberOf_Components = _Components.length;
 
@@ -63,7 +78,7 @@ var Modality = (function () {
 				else if (keyCode == 13) {
 
 					// but only do so if the element doesn't have a prevent enter submit attribute
-					if ($(_getHighestComponent().Instance.getContentElement()).attr('modality-prevent-enter-submit') != 'true') {
+					if (_getHighestComponent().Instance.getContentElement().getAttribute('modality-prevent-enter-submit') != 'true') {
 						_broadcastSubmitFromHighestComponent();
 					}
 
@@ -73,25 +88,25 @@ var Modality = (function () {
 
 		});
 
-		$(window).resize(function () {
+		window.addEventListener('resize', function(e) {
 
 			for (var i in _Components) {
 				_Components[i].resize();
 			}
 
 		});
-		
+
 	};
 
-	var _createModalityInstance = function ($target) {
+	var _createModalityInstance = function (target) {
 
 		_hidePageOverflow();
 
-		var $invokingElement = $target;
+		var invokingElement = target;
 
 		var componentType;
 
-		if ($target.is('[modality-modal]')) {
+		if (target.hasAttribute('modality-modal')) {
 			componentType = 'modal';
 		}
 
@@ -109,7 +124,7 @@ var Modality = (function () {
 			// if it's the root-level modal for the option of 
 			// scaling the background
 			ComponentInstance = new Modality.Modal({
-				invokingElement: $invokingElement[0], 
+				invokingElement: invokingElement,
 				componentIndex: componentIndex
 			});
 
@@ -117,7 +132,7 @@ var Modality = (function () {
 		else if (componentType == 'popover') {
 
 			ComponentInstance = new Modality.Popover({
-				invokingElement: $invokingElement[0]
+				invokingElement: invokingElement
 			});
 
 		}
@@ -126,7 +141,7 @@ var Modality = (function () {
 
 			ComponentInstance.load();
 			_Components.push(ComponentInstance);
-			_$modalityScopeContainer.addClass('inactive');
+			_dom.modalityScopeContainer.classList.add('inactive');
 
 		}
 	};
@@ -165,7 +180,8 @@ var Modality = (function () {
 
 			component.Instance.close();
 
-			$(component.Instance.getContentElement()).trigger('Modality.Close');
+			var event = new CustomEvent('Modality.Close', {bubbles: true, cancelable: true});
+			component.Instance.getContentElement().dispatchEvent(event);
 
 			_destroyComponentInstance(component.index);			
 
@@ -174,16 +190,17 @@ var Modality = (function () {
 		}
 
 		if (_Components.length == 0) {
-			_$modalityScopeContainer.removeClass('inactive');
+			_dom.modalityScopeContainer.classList.remove('inactive');
 		}		
 
 	};
 
 	var _broadcastSubmitFromHighestComponent = function () {
 
-		$(_getHighestComponent().Instance.getContentElement()).trigger('Modality.Submit');	
+		var event = new CustomEvent('Modality.Submit', {bubbles: true, cancelable: true});
+		_getHighestComponent().Instance.getContentElement().dispatchEvent(event);
 
-	};	
+	};
 
 	var _closeEverything = function () {
 
@@ -200,32 +217,31 @@ var Modality = (function () {
 	};	
 
 	var _hidePageOverflow = function() {
-		$('html').addClass('modality-html-hidden')
+		_dom.html.classList.add('modality-html-hidden');
 		if (_htmlIsOverflowing() && _isWindows()) {
 			var paddingRight = '16px';
 			if (_isIE()) {
 				paddingRight = '17px';
 			}
-			$('html').css('padding-right', paddingRight);
+			_dom.html.style.paddingRight = paddingRight;
 		}
-		if (_isTouch()) {
-			$('html').css('position', 'fixed');
+		if (_isTouch) {
+			_dom.html.style.position = 'fixed';
 		}
 	};
 
 	var _showPageOverflow = function() {
-		$('html').removeClass('modality-html-hidden')
+		_dom.html.classList.remove('modality-html-hidden');
 		if (_isWindows()) {
-			$('html').css('padding-right', '');
+			_dom.html.style.paddingRight = '';
 		}
-		if (_isTouch()) {
-			$('html').css('position', '');
+		if (_isTouch) {
+			_dom.html.style.position = '';
 		}		
 	};
 
 	var _htmlIsOverflowing = function() {
-		var html = $('html')[0];
-		return html.scrollHeight > html.clientHeight || html.scrollWidth > html.clientWidth;
+		return _dom.html.scrollHeight > _dom.html.clientHeight || _dom.html.scrollWidth > _dom.html.clientWidth;
 	};
 
 	var _isWindows = function() {
@@ -257,10 +273,6 @@ var Modality = (function () {
 
 		// other browser
 		return false;
-	};
-
-	var _isTouch = function() {
-		return 'ontouchstart' in document.documentElement
 	};
 
 	var _init = function () {

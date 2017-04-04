@@ -1,16 +1,15 @@
-/*  
-	http://modality.me
-	Component modality-popover.js
-	Instantiable UI popover
-	Created by ianrichard.com 2013-15
-	MIT license
-*/
 Modality.Popover = function (config) {
 
-	var _$invokingElement = $(config.invokingElement);
+	var _dom = {
+		invokingElement: config.invokingElement,
+		popoverScopeContainer: null,
+		popover: null,
+		popoverContainer: null,
+		popoverContentInner: null,
+		popoverCaret: null
+	};
 
 	var _defaultPopoverAttributes = {
-
 		width: 			 300,
 		height: 		 'auto',
 		minimumHeight: 	 100,
@@ -18,19 +17,13 @@ Modality.Popover = function (config) {
 		fadeOutDuration: 300,
 		closeOutside:	 true,
 		popoverPosition: 'vertical',
-		
+
 		// makes sure the caret doesn't leave the container
 		// especially with the rounded corner
 		minimumCaretContainerOffset: 15
 
-	};	
+	};
 
-	var _$popoverScopeContainer,
-		_$popover,
-		_$popoverContainer,
-		_$popoverContent,
-		_$popoverCaret,
-		_$popoverSourceContentParent;
 
 	// how much padding you want from the popover to the edge of the document in %
 	var _documentLeftRightPadding = .00;
@@ -59,43 +52,24 @@ Modality.Popover = function (config) {
 	var _popoverSnapshot = {};	
 	
 	var _loadPopover = function () {
-
 		_checkAndSetTransitioningFlag();
-
 		_getPopoverAttributes();
-
 		_runCallback(_popoverAttributes.preLoadCallback);
-
 		_getPopoverScopeContainer();
-
 		_getInvokingElementAttributes();
-
 		_injectPopoverTemplate();
-
 		_setScopedSelectors();
-
 		_getDocumentSize();
-
 		_getPaddedDocumentRegion();
-
 		_getRegionsAroundTheInvokingLink();
-
 		_getBestRegionForThePopover();
-
 		_loadPopoverContent();
-
 		_broadcastPreLoadEvent();
-
 		_setHiddenDefaultPopoverDisplayProperties();
-
 		_positionPopoverContent();
-
 		_setCaretPosition();
-
 		_showPopover();
-
 		_setGenericEventListeners();
-
 	};
 
 	var _checkAndSetTransitioningFlag = function () {
@@ -115,26 +89,16 @@ Modality.Popover = function (config) {
 	var _getPopoverAttributes = function () {
 		
 		_popoverAttributes = {};
-
-		_popoverAttributes.width 					= _$invokingElement.attr('modality-width');
-
-		_popoverAttributes.height 					= _$invokingElement.attr('modality-height');
-
-		_popoverAttributes.minimumHeight 			= _$invokingElement.attr('modality-minimum-height');
-
-		_popoverAttributes.fadeInDuration 			= _$invokingElement.attr('modality-fade-in-duration');
-
-		_popoverAttributes.fadeOutDuration 			= _$invokingElement.attr('modality-fade-out-duration');
-
-		_popoverAttributes.closeOutside				= _$invokingElement.attr('modality-close-outside');
-
-		_popoverAttributes.popoverPosition			= _$invokingElement.attr('modality-position');
-
-		_popoverAttributes.preLoadCallback 			= _$invokingElement.attr('modality-pre-load-callback');
-
-		_popoverAttributes.postCloseCallback 		= _$invokingElement.attr('modality-post-close-callback');
-
-		_popoverAttributes.offsetFromInvokingLink 	= _$invokingElement.attr('modality-link-offset') || String(Math.round(15 - _$invokingElement.outerHeight() * .25));
+		_popoverAttributes.width 					= _dom.invokingElement.getAttribute('modality-width');
+		_popoverAttributes.height 					= _dom.invokingElement.getAttribute('modality-height');
+		_popoverAttributes.minimumHeight 			= _dom.invokingElement.getAttribute('modality-minimum-height');
+		_popoverAttributes.fadeInDuration 			= _dom.invokingElement.getAttribute('modality-fade-in-duration');
+		_popoverAttributes.fadeOutDuration 			= _dom.invokingElement.getAttribute('modality-fade-out-duration');
+		_popoverAttributes.closeOutside				= _dom.invokingElement.getAttribute('modality-close-outside');
+		_popoverAttributes.popoverPosition			= _dom.invokingElement.getAttribute('modality-position');
+		_popoverAttributes.preLoadCallback 			= _dom.invokingElement.getAttribute('modality-pre-load-callback');
+		_popoverAttributes.postCloseCallback 		= _dom.invokingElement.getAttribute('modality-post-close-callback');
+		_popoverAttributes.offsetFromInvokingLink 	= _dom.invokingElement.getAttribute('modality-link-offset') || String(Math.round(15 - _dom.invokingElement.offsetHeight * .25));
 
 		// let's scrubbadubb dubb the values
 		for (attribute in _popoverAttributes) {
@@ -144,7 +108,7 @@ Modality.Popover = function (config) {
 			if (typeof attributeValue != 'function') {
 
 				// if it's empty, set it to undefined for the proper extend object merging
-				if (!attributeValue || $.trim(attributeValue) === '') {
+				if (!attributeValue || !attributeValue.replace(/\s/g, '').length) {
 					attributeValue = undefined;
 				} 
 				// type cast numbers
@@ -161,27 +125,26 @@ Modality.Popover = function (config) {
 			_popoverAttributes.closeOutside = false;
 		}
 
-		_popoverAttributes = $.extend({}, _defaultPopoverAttributes, _popoverAttributes);
-					
+		_popoverAttributes = _extend(_defaultPopoverAttributes, _popoverAttributes);
+
 	};
 
 	var _getInvokingElementAttributes = function () {
 
 		var scrollTop = 0;
 
-		// if it's a root-level link and is able to scroll within the main document
-		if (_$popoverScopeContainer.has(_$invokingElement)) {
-			scrollTop = $(window).scrollTop();
-		}		
+		if (_dom.popoverScopeContainer.contains(_dom.invokingElement)) {
+			scrollTop = document.body.scrollTop;
+		}
 
-		_invokingElementAttributes.top 				= _$invokingElement.offset().top - scrollTop;
-		_invokingElementAttributes.bottom 			= _invokingElementAttributes.top + _$invokingElement.outerHeight();
+		_invokingElementAttributes.top 				= _dom.invokingElement.getBoundingClientRect().top;
+		_invokingElementAttributes.bottom 			= _invokingElementAttributes.top + _dom.invokingElement.offsetHeight;
 
-		_invokingElementAttributes.left 			= _$invokingElement.offset().left;
-		_invokingElementAttributes.right 			= _invokingElementAttributes.left + _$invokingElement.outerWidth();
+		_invokingElementAttributes.left 			= _dom.invokingElement.getBoundingClientRect().left;
+		_invokingElementAttributes.right 			= _invokingElementAttributes.left + _dom.invokingElement.offsetWidth;
 
-		_invokingElementAttributes.width 			= _$invokingElement.outerWidth();
-		_invokingElementAttributes.height 			= _$invokingElement.outerHeight();
+		_invokingElementAttributes.width 			= _dom.invokingElement.offsetWidth;
+		_invokingElementAttributes.height 			= _dom.invokingElement.offsetHeight;
 
 		_invokingElementAttributes.horizontalCenter = _invokingElementAttributes.left + _invokingElementAttributes.width / 2;
 		_invokingElementAttributes.verticalCenter 	= _invokingElementAttributes.top + _invokingElementAttributes.height / 2;
@@ -191,28 +154,30 @@ Modality.Popover = function (config) {
 	var _getPopoverScopeContainer = function () {
 		
 		// reset from previous load
-		_$popoverScopeContainer = null;
+		_dom.popoverScopeContainer = null;
+		_dom.popoverScopeContainer = document.querySelector('body > *');
 
-		_$popoverScopeContainer = $('body > *');
-		
-	};	
+	};
 
 	var _injectPopoverTemplate = function () {
-		
-		_$popover = $('<div class="modality-popover"><div class="modality-popover-obscure" modality-obscure onclick=""></div><div class="modality-popover-container" modality-popover-container><div class="modality-popover-caret" modality-popover-caret></div><div class="modality-popover-content" modality-popover-content tabindex="0"></div></div></div>');
+
+		_dom.popover = document.createElement('div');
+		_dom.popover.className = 'modality-popover';
+
+		_dom.popover.innerHTML = '<div class="modality-popover-obscure" modality-obscure onclick=""></div><div class="modality-popover-container" modality-popover-container><div class="modality-popover-caret" modality-popover-caret></div><div class="modality-popover-content" modality-popover-content tabindex="0"></div></div>';
 
 		if (_popoverAttributes.closeOutside) {
-			_$popover.find('[modality-obscure]').attr('modality-close','');
+			_dom.popover.querySelector('[modality-obscure]').setAttribute('modality-close','');
 		}
 
-		_$popoverScopeContainer.parent().append(_$popover);
+		_dom.popoverScopeContainer.parentNode.appendChild(_dom.popover);
 
 	};
 
 	var _setScopedSelectors = function () {
-		_$popoverContainer 	= _$popover.find('[modality-popover-container]');
-		_$popoverContent 	= _$popover.find('[modality-popover-content]');
-		_$popoverCaret		= _$popover.find('[modality-popover-caret]');
+		_dom.popoverContainer = _dom.popover.querySelector('[modality-popover-container]');
+		_dom.popoverContent 	= _dom.popover.querySelector('[modality-popover-content]');
+		_dom.popoverCaret		= _dom.popover.querySelector('[modality-popover-caret]');
 	};
 
 	var _getPaddedDocumentRegion = function () {
@@ -351,7 +316,7 @@ Modality.Popover = function (config) {
 			blockTopBottom = true;
 		}
 
-		var isVerticalPopover 	= $.inArray(_popoverAttributes.popoverPosition, ['vertical', 'top', 'bottom']) > -1;
+		var isVerticalPopover = 'vertical top bottom'.indexOf(_popoverAttributes.popoverPosition) > -1;
 
 		if (isVerticalPopover && blockTopBottom) {
 			isVerticalPopover = false;
@@ -435,8 +400,8 @@ Modality.Popover = function (config) {
 
 	var _loadPopoverContent = function () {
 		_PopoverContent = new Modality.Content({
-			invokingElement: _$invokingElement[0],
-			targetContainer: _$popoverContent[0],
+			invokingElement: _dom.invokingElement,
+			targetContainer: _dom.popoverContent,
 			postLoadCallback: function () {
 				_contentIsLoaded = true;
 				_resize();
@@ -448,26 +413,30 @@ Modality.Popover = function (config) {
 	};
 
 	var _broadcastPreLoadEvent = function () {
-		$(_getContentElement()).trigger('Modality.PreLoad');
-	};	
+		var event = new CustomEvent('Modality.PreLoad', {bubbles: true, cancelable: true});
+		_getContentElement().dispatchEvent(event);
+	};
 
 	var _broadcastPostLoadEvent = function () {
-		$(_getContentElement()).trigger('Modality.PostLoad');
-	};	
+		var event = new CustomEvent('Modality.PostLoad', {bubbles: true, cancelable: true});
+		_getContentElement().dispatchEvent(event);
+	};
 
-	var _setHiddenDefaultPopoverDisplayProperties = function () { 		
-		_$popoverContent.css('height', _popoverAttributes.height);
-		_$popover.show();
+	var _setHiddenDefaultPopoverDisplayProperties = function () {
+		_dom.popoverContent.style.height = _popoverAttributes.height + 'px';
+		_dom.popover.style.css = '';
 	};
 
 
 	var _positionPopoverContent = function () {
 
-		var $popoverContentInner = _$popoverContent.find('> *');
+		_dom.popoverContentInner = _dom.popoverContent.firstChild;
 
-		var scrollTop = $popoverContentInner.scrollTop();
+		if (!_dom.popoverContentInner) { return; }
 
-		$popoverContentInner.height('auto');
+		_dom.popoverContentInner.style.height = 'auto';
+
+		var scrollTop = _dom.popoverContentInner.scrollTop;
 
 		var width, maxWidth, maxHeight, top, left;
 
@@ -476,7 +445,7 @@ Modality.Popover = function (config) {
 			width 		= _popoverAttributes.width;
 			maxWidth  	= _bestRegionForThePopover.width;
 			maxHeight 	=  _bestRegionForThePopover.height - _popoverAttributes.offsetFromInvokingLink;
-			top 		= _bestRegionForThePopover.bottom  - _$popoverContent.outerHeight() - _popoverAttributes.offsetFromInvokingLink;
+			top 		= _bestRegionForThePopover.bottom  - _dom.popoverContent.offsetHeight - _popoverAttributes.offsetFromInvokingLink;
 
 		} 
 
@@ -494,7 +463,7 @@ Modality.Popover = function (config) {
 			width 		= _popoverAttributes.width 		  - _popoverAttributes.offsetFromInvokingLink;
 			maxWidth 	= _bestRegionForThePopover.width  - _popoverAttributes.offsetFromInvokingLink;
 			maxHeight 	= _bestRegionForThePopover.height;
-			left 		= _bestRegionForThePopover.right  - _$popoverContent.outerWidth() - _popoverAttributes.offsetFromInvokingLink;
+			left 		= _bestRegionForThePopover.right  - _dom.popoverContent.offsetWidth - _popoverAttributes.offsetFromInvokingLink;
 
 		} 
 
@@ -507,40 +476,40 @@ Modality.Popover = function (config) {
 
 		}
 
-		_$popoverContent.css('width', 	   width);
-		_$popoverContent.css('max-width',  maxWidth);
-		_$popoverContent.css('max-height', maxHeight);
+		_dom.popoverContent.style.width = width + 'px';
+		_dom.popoverContent.style.maxWidth = maxWidth + 'px';
+		_dom.popoverContent.style.maxHeight = maxHeight + 'px';
 
 		if (left) {
-			_$popoverContainer.css('left', left);
+			_dom.popoverContainer.style.left = left + 'px';
 			_setHorizontalPopoverY();
-		} 
+		}
 		else {
-			_$popoverContainer.css('top',  top);
+			_dom.popoverContainer.style.top = top + 'px';
 			_setVerticalPopoverX();			
 		}
 
-		$popoverContentInner.height(_$popoverContent.height());
+		_dom.popoverContentInner.style.height = _dom.popoverContent.offsetHeight + 'px';
 
 		// check for out of bounds
 		// this can happen on the parent resizing the document smaller cropping the bottom
 
-		var popoverHeight = _$popoverContent.height();
+		var popoverHeight = _dom.popoverContent.offsetHeight;
 
-		var popoverY 	  = Number(_$popoverContainer.css('top').split('px')[0]);
+		var popoverY = Number(_dom.popoverContainer.style.top.split('px')[0]);
 
 		var popoverBottom = popoverY + popoverHeight;
 
 		// -1 is for minor measuring differences
 		if (popoverBottom - 1 > _paddedDocumentRegion.bottom) {
-			
-			_$popoverContent.css('max-height', _paddedDocumentRegion.height);
-			
-			popoverHeight = _$popoverContainer.height();
+
+			_dom.popoverContent.style.maxHeight = _getPaddedDocumentRegion.height + 'px';
+
+			popoverHeight = _dom.popoverContainer.offsetHeight;
 			popoverBottom = popoverY + popoverHeight;
 
-			var targetPopoverY = _paddedDocumentRegion.bottom - popoverHeight;
-			_$popoverContainer.css('top', targetPopoverY);
+			var targetPopoverY = _paddedDocumentRegion.bottom - popoverHeight + 'px';
+			_dom.popoverContainer.style.top = targetPopoverY;
 			_showCaret = false;
 		} 
 
@@ -548,14 +517,14 @@ Modality.Popover = function (config) {
 			_showCaret = true;
 		}
 
-		$popoverContentInner.height('auto');
-		$popoverContentInner.scrollTop(scrollTop);
+		_dom.popoverContentInner.style.height = 'auto';
+		_dom.popoverContentInner.scrollTop = scrollTop;
 
 	};
 
 	var _setVerticalPopoverX = function () {
 
-		var popoverContentWidth  = _$popoverContent.outerWidth();
+		var popoverContentWidth  = _dom.popoverContent.offsetWidth;
 		var popoverContentOffset = popoverContentWidth / 2;
 
 		var popoverX =  _invokingElementAttributes.horizontalCenter - popoverContentOffset;
@@ -568,13 +537,14 @@ Modality.Popover = function (config) {
 			popoverX = _bestRegionForThePopover.right - popoverContentWidth;
 		}
 
-		_$popoverContainer.css('left', popoverX);
+		popoverX = popoverX + 'px';
 
+		_dom.popoverContainer.style.left = popoverX;
 	};
 
 	var _setHorizontalPopoverY = function () {
 
-		var popoverContentHeight  = _$popoverContent.outerHeight();
+		var popoverContentHeight = _dom.popoverContent.offsetHeight;
 		var popoverContentOffset  = popoverContentHeight / 2;
 
 		var popoverY =  _invokingElementAttributes.verticalCenter - popoverContentOffset;
@@ -587,35 +557,33 @@ Modality.Popover = function (config) {
 			popoverY = _bestRegionForThePopover.bottom - popoverContentHeight;
 		}
 
-		_$popoverContainer.css('top', popoverY);
+		_dom.popoverContainer.style.top = popoverY + 'px';
 
 	};	
 
 	var _setCaretPosition = function () {
 
 		if (!_showCaret) {
-			_$popoverCaret.attr('class', '');
+			_dom.popoverCaret.setAttribute('class', '');
 			return;
 		}
 
 		// reset from prior positioning
-		_$popoverCaret.attr('class', 'modality-popover-caret modality-popover-caret-' + _bestRegionForThePopover.regionName);
-		_$popoverCaret.css('top', '');
-		_$popoverCaret.css('left', '');
+		_dom.popoverCaret.setAttribute('class', 'modality-popover-caret modality-popover-caret-' + _bestRegionForThePopover.regionName);
+		_dom.popoverCaret.style.top = '';
+		_dom.popoverCaret.style.left = '';
 
 		if (_bestRegionForThePopover.regionName == 'top' || _bestRegionForThePopover.regionName == 'bottom') {
 
-			var targetCaretX = _invokingElementAttributes.horizontalCenter - _$popoverContainer.position().left;
-
-			_$popoverCaret.css('left', targetCaretX);
+			var targetCaretX = _invokingElementAttributes.horizontalCenter - _dom.popoverContainer.offsetLeft;
+			_dom.popoverCaret.style.left = targetCaretX + 'px';
 
 		} 
 
 		else if (_bestRegionForThePopover.regionName == 'left' || _bestRegionForThePopover.regionName == 'right') {
 
-			var targetCaretY = _invokingElementAttributes.verticalCenter - _$popoverContainer.position().top;
-
-			_$popoverCaret.css('top', targetCaretY);
+			var targetCaretY = _invokingElementAttributes.verticalCenter - _dom.popoverContainer.offsetTop;
+			_dom.popoverCaret.style.top = targetCaretY + 'px';
 
 		}
 
@@ -623,16 +591,15 @@ Modality.Popover = function (config) {
 
 	var _showPopover = function () {
 
-		_$popoverContent.css('height', _popoverAttributes.height);
+		_dom.popoverContent.style.height = _popoverAttributes.height + 'px';
 
 		setTimeout(function () {
 			_clearTransitioningFlag();
-			_broadcastPostLoadEvent();			
+			_broadcastPostLoadEvent();
 		}, _popoverAttributes.fadeInDuration);
 
-		_$popover.addClass('modality-popover-active');
-
-		_$popoverContent.focus();
+		_dom.popover.classList.add('modality-popover-active');
+		_dom.popoverContent.focus();
 
 	};	
 
@@ -671,14 +638,14 @@ Modality.Popover = function (config) {
 	var _setPopoverSnapshot = function () {
 		_popoverSnapshot.documentWidth 	= _documentWidth;
 		_popoverSnapshot.documentHeight = _documentHeight;
-		_popoverSnapshot.contentHeight 	= _$popoverContent.height();
+		_popoverSnapshot.contentHeight 	= _dom.popoverContent.offsetHeight;
 	};
 
 	var _documentSizeOrPopoverContentHeightHasChanged = function() {
 
 		if (_documentWidth 				!= _popoverSnapshot.documentWidth 
 		||  _documentHeight 			!= _popoverSnapshot.documentHeight
-		||  _$popoverContent.height()	!= _popoverSnapshot.contentHeight) {
+		||  _dom.popoverContent.offsetHeight != _popoverSnapshot.contentHeight) {
 			return true;
 		} 
 		else {
@@ -694,22 +661,16 @@ Modality.Popover = function (config) {
 
 		_popoverIsTransitioning = true;
 
-		_$invokingElement.focus();
+		_dom.invokingElement.focus();
 
-		// anything that has a component-close attribute in the popover
-		// gets that attribute removed so someone doesn't double click close
-		// this is especially useful for multiple layers and clicking quickly
-		// out of them
-		_$popover.find('[component-close]').removeAttr('component-close');
+		_dom.popover.classList.remove('modality-popover-active');
+		_dom.popover.classList.add('modality-popover-closing');
 
-		_$popover.removeClass('modality-popover-active');
-		_$popover.addClass('modality-popover-closing');
-		
 		setTimeout(function () {
-			_$popover.hide();
+			_dom.popover.style.display = 'none';
 			_popoverIsTransitioning = false;
 			_PopoverContent.unload();
-			_$popover.remove();
+			_dom.popover.parentNode.removeChild(_dom.popover);
 			_runCallback(_popoverAttributes.postCloseCallback);
 		}, _popoverAttributes.fadeOutDuration);
 
@@ -717,8 +678,8 @@ Modality.Popover = function (config) {
 
 	var _getDocumentSize = function  () {
 
-		_documentWidth   = $(window).width();
-		_documentHeight  = $(window).height();
+		_documentWidth   = window.innerWidth;
+		_documentHeight  = window.innerHeight;
 
 	};	
 
@@ -737,8 +698,8 @@ Modality.Popover = function (config) {
 
 	var _popoverIsShowing = function () {
 
-		if (_$popover != undefined) {
-			return _$popover.is(':visible');
+		if (_dom.popover != undefined) {
+			return _dom.popover.style.display !== 'none'
 		} else {
 			return false;
 		}
@@ -760,43 +721,34 @@ Modality.Popover = function (config) {
 		if (MutationObserver) {
 			var observer = new MutationObserver(function(mutations, observer) {
 				if (_popoverIsShowing) {
-					_resize();				
+					_resize();
 				}
 			});
 
-			observer.observe(_$popoverContent.find('> *')[0], {
+			observer.observe(_dom.popoverContent.firstChild, {
 				subtree:    true,
 				attributes: true
 			});	
-		} 
-		// For browsers that don't support mutation observers	
-		else {
-			_$popoverContent.bind('click', function (e) {
-				_resize();
-			});
-
-			_$popoverContent.keyup(function(e) {
-
-				// when switching between focusable elements
-				if (_lastFocusedInnerElement !== e.target) {
-					_resize();
-				}
-
-				_lastFocusedInnerElement = e.target;
-
-				//enter
-				if (e.keyCode == 13) {
-					_resize();
-				}
-			});
 		}
 
 	};	
 
 	var _getContentElement = function () {
-		return _$popover.find('[modality-popover-content] > *')[0];
+		return _dom.popover.querySelector('[modality-popover-content] > *');
 	};
-		
+
+	// TODO - migrate utility functions...
+
+	var _extend = function(defaultObject, customObject) {
+		var returnObject = defaultObject;
+		for (var key in customObject) {
+			if (customObject[key]) {
+				returnObject[key] = customObject[key];
+			}
+		}
+		return returnObject;
+	};
+
 	return {
 		componentName: 		'Popover',
 		load: 				_loadPopover,
